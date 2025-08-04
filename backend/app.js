@@ -1,6 +1,7 @@
 import cookieParser from "cookie-parser";
 import express from "express";
 import cors from "cors";
+import { organizationRouter } from "./src/routes/organization.route";
 
 const app = express();
 
@@ -39,6 +40,6 @@ app.get("/", (req, res) => {
   res.send("Hello we are connected");
 });
 
-
+app.get("/api/organization", organizationRouter);
 
 export default app;
