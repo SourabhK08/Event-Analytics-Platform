@@ -1,8 +1,8 @@
 import { Organization } from "../models/organization.model";
+import { Request, Response } from "express";
+import asyncHandler from "../utils/AsyncHandler";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
-import asyncHandler from "../utils/AsyncHandler";
-import { Request, Response } from "express";
 
 interface createOrganizationBody {
   name: string;

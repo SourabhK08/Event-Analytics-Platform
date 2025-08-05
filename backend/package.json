@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon -r dotenv/config --experimental-json-modules ./index.js"
+    "dev": "tsx watch index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev:nodemon": "nodemon --exec \"tsx\" index.ts"
   },
   "author": "Sourabh kakani",
   "license": "ISC",
@@ -16,13 +20,18 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.17.0",
-    "nodemon": "^3.1.10"
+    "mongoose": "^8.17.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/cookie-parser": "^1.4.7",
     "@types/cors": "^2.8.19",
-    "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.3",
-    "@types/mongoose": "^5.11.96"
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^24.2.0",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2"
   }
 }

@@ -41,7 +41,7 @@ app.get("/", (req, res) => {
   res.send("Hello we are connected");
 });
 
-app.get("/api/organization", organizationRouter);
-app.get("/api/project", projectRouter);
+app.use("/api/organization", organizationRouter);
+app.use("/api/project", projectRouter);
 
 export default app;

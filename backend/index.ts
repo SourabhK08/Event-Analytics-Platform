@@ -1,11 +1,10 @@
 import dotenv from 'dotenv'
-import connectDb from './src/db/index.js'
-import app from './app.js'
+import app from './app'
+import connectDb from './src/db';
 
 dotenv.config();
 
-const port = process.env.PORT;
-
+const port: number = parseInt(process.env.PORT || '8800', 10);
 connectDb()
 .then(() => {
     app.on("error", (err) => {
