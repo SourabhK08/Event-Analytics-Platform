@@ -3,12 +3,12 @@ import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import asyncHandler from "../utils/AsyncHandler";
 import { Request, Response } from "express";
+import crypto from 'crypto'
 
 interface createProjectBody {
   name: string;
   description?: string;
   organizationId: string;
-  apiKey: string;
 }
 
 interface listProjectQuery {
@@ -21,9 +21,35 @@ interface GetProjectParams {
   id: string;
 }
 
+const generateApiKey = (): string => {
+  const prefix = 'sk_';
+  const randomBytes = crypto.randomBytes(32).toString('hex');
+  return prefix + randomBytes;
+};
+
+const generateUniqueApiKey = async (): Promise<string> => {
+  let apiKey: string;
+  let isUnique = false;
+  let attempts = 0;
+  const maxAttempts = 5;
+
+  while (!isUnique && attempts < maxAttempts) {
+    apiKey = generateApiKey();
+    const existing = await Project.findOne({ apiKey });
+    
+    if (!existing) {
+      isUnique = true;
+      return apiKey;
+    }
+    attempts++;
+  }
+
+  throw new ApiError(500, "Failed to generate unique API key");
+};
+
 const createProject = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const { name, description, organizationId, apiKey } =
+    const { name, description, organizationId } =
       req.body as createProjectBody;
 
     if (!organizationId) {
@@ -33,10 +59,13 @@ const createProject = asyncHandler(
       throw new ApiError(400, "Name is required");
     }
 
+    const apiKey = await generateUniqueApiKey();
+
     const project = await Project.create({
       name,
       description,
       organizationId,
+      apiKey
     });
 
     const createdProject = await Project.findById(project._id)
@@ -78,7 +107,7 @@ const listProject = asyncHandler(
 
     const count = await Project.countDocuments(query);
 
-    const project = await Project.find(query)
+    const projects = await Project.find(query)
       .select("-__v")
       .populate({ path: "organizationId", select: "name email website" })
       .skip(skip)
@@ -91,7 +120,7 @@ const listProject = asyncHandler(
           : "No projects found"
         : "Project list fetched successfully";
 
-    res.status(200).json(new ApiResponse(200, { count, project }, message));
+    res.status(200).json(new ApiResponse(200, { count, projects }, message));
   }
 );
 
@@ -104,7 +133,7 @@ const getProjectById = asyncHandler(
       .populate({ path: "organizationId", select: "name email website" });
 
     if (!project) {
-      throw new ApiError(500, "Internal Server Error");
+      throw new ApiError(404, "Project not found or doesn't exists");
     }
 
     res
@@ -143,7 +172,7 @@ const updateProject = asyncHandler(
       .select("-__v")
       .populate({ path: "organizationId", select: "name email website" });
 
-    if (!updateProject) {
+    if (!updatedProject) {
       throw new ApiError(404, "Project not updated successfully");
     }
 
@@ -178,10 +207,40 @@ const deleteProject = asyncHandler(
   }
 );
 
+
+const regenerateApiKey = asyncHandler(
+  async (req: Request<GetProjectParams>, res: Response): Promise<void> => {
+    const { id } = req.params;
+
+    const project = await Project.findById(id);
+
+    if (!project) {
+      throw new ApiError(404, "Project not found");
+    }
+
+    const newApiKey = await generateUniqueApiKey();
+
+    const updatedProject = await Project.findByIdAndUpdate(
+      id,
+      { $set: { apiKey: newApiKey } },
+      { new: true }
+    )
+      .select("-__v")
+      .populate({ path: "organizationId", select: "name email website" });
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, updatedProject, "API key regenerated successfully")
+      );
+  }
+);
+
 export {
   listProject,
   getProjectById,
   createProject,
   deleteProject,
   updateProject,
+  regenerateApiKey
 };
