@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { organizationRouter } from "./src/routes/organization.route";
 import { projectRouter } from "./src/routes/project.route";
+import eventRouter from "./src/routes/event.route";
 
 const app = express();
 
@@ -43,5 +44,6 @@ app.get("/", (req, res) => {
 
 app.use("/api/organization", organizationRouter);
 app.use("/api/project", projectRouter);
+app.use("/api/event", eventRouter);
 
 export default app;
