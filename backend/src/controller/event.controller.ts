@@ -60,10 +60,10 @@ const ingestEvents = asyncHandler(
 
     const processedEvents = events.map((event) => {
       if (!event.userId) {
-        throw new ApiError(400, "userId is required for each event");
+        throw new ApiError(400, "User ID is required for each event");
       }
       if (!event.eventName) {
-        throw new ApiError(400, "eventName is required for each event");
+        throw new ApiError(400, "Event name is required for each event");
       }
 
       return {
@@ -75,8 +75,6 @@ const ingestEvents = asyncHandler(
         organizationId,
         projectId,
         sessionId: event.sessionId?.trim() || undefined,
-        userAgent: req.headers["user-agent"] || undefined,
-        ipAddress: req.ip || req.socket.remoteAddress || undefined,
       };
     });
 
@@ -128,18 +126,18 @@ const listEvents = asyncHandler(
       endDate,
       sessionId,
       page = 1,
-      limit = 50,
+      limit = 10,
     } = req.query as ListEventQuery;
 
     const organizationId = req.organizationId;
     const projectId = req.projectId;
 
     if (!organizationId || !projectId) {
-      throw new ApiError(401, "Authentication required");
+      throw new ApiError(401, "Oraganization or Project ID is required");
     }
 
-    const pageNum = parseInt(page as string, 10) || 1;
-    const limitNum = Math.min(parseInt(limit as string, 10) || 50, 1000);
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
     const skip = (pageNum - 1) * limitNum;
 
     const query: Record<string, any> = {
@@ -170,7 +168,7 @@ const listEvents = asyncHandler(
     }
 
     try {
-      const totalCount = await EventModel.countDocuments(query);
+      const count = await EventModel.countDocuments(query);
 
       const events = await EventModel.find(query)
         .select("-__v")
@@ -179,21 +177,14 @@ const listEvents = asyncHandler(
         .limit(limitNum);
 
       const message =
-        totalCount === 0 ? "No events found" : "Events fetched successfully";
+        count === 0 ? "No events found" : "Events fetched successfully";
 
       res.status(200).json(
         new ApiResponse(
           200,
           {
-            totalCount,
+            count,
             events,
-            pagination: {
-              currentPage: pageNum,
-              limit: limitNum,
-              totalPages: Math.ceil(totalCount / limitNum),
-              hasNext: pageNum < Math.ceil(totalCount / limitNum),
-              hasPrev: pageNum > 1,
-            },
           },
           message
         )
@@ -205,13 +196,13 @@ const listEvents = asyncHandler(
 );
 
 const getEventById = asyncHandler(
-  async (req: Request, res: Response): Promise<void> => {
-    const { id } = req.params as GetEventParams;
+  async (req: Request<GetEventParams>, res: Response): Promise<void> => {
+    const { id } = req.params;
     const organizationId = req.organizationId;
     const projectId = req.projectId;
 
     if (!organizationId || !projectId) {
-      throw new ApiError(401, "Authentication required");
+      throw new ApiError(401, "Oraganization or Project ID is required");
     }
 
     const event = await EventModel.findOne({
@@ -231,13 +222,13 @@ const getEventById = asyncHandler(
 );
 
 const deleteEvent = asyncHandler(
-  async (req: Request, res: Response): Promise<void> => {
-    const { id } = req.params as GetEventParams;
+  async (req: Request<GetEventParams>, res: Response): Promise<void> => {
+    const { id } = req.params;
     const organizationId = req.organizationId;
     const projectId = req.projectId;
 
     if (!organizationId || !projectId) {
-      throw new ApiError(401, "Authentication required");
+      throw new ApiError(401, "Oraganization or Project ID is required");
     }
 
     const deletedEvent = await EventModel.findOneAndDelete({
@@ -262,7 +253,7 @@ const getEventStats = asyncHandler(
     const projectId = req.projectId;
 
     if (!organizationId || !projectId) {
-      throw new ApiError(401, "Authentication required");
+      throw new ApiError(401, "Oraganization or Project ID is required");
     }
 
     try {

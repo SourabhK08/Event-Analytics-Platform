@@ -4,6 +4,7 @@ import cors from "cors";
 import { organizationRouter } from "./src/routes/organization.route";
 import { projectRouter } from "./src/routes/project.route";
 import eventRouter from "./src/routes/event.route";
+import { errorHandler } from "./src/middleware/errorHandler";
 
 const app = express();
 
@@ -37,6 +38,8 @@ app.use(
 app.use(express.static("public"));
 
 app.use(cookieParser());
+
+app.use(errorHandler);
 
 app.get("/", (req, res) => {
   res.send("Hello we are connected");

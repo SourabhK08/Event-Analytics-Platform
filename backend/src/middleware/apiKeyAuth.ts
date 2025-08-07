@@ -26,7 +26,7 @@ export const authenticateApiKey = async (
       throw new ApiError(401, "API key is required in headers (X-API-Key)");
     }
 
-    if (!apiKey.startsWith("ak_")) {
+    if (!apiKey.startsWith("sk_")) {
       throw new ApiError(401, "Invalid API key format");
     }
 
